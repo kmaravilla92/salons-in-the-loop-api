@@ -13,7 +13,7 @@ class CreateUsersReviewsTable extends Migration
      */
     public function up()
     {
-        Schema::create('users_reviews', function(Blueprint $table)
+        Schema::create('user_reviews', function(Blueprint $table)
         {
             $table->increments('id');
             $table->text('feedback')->nullable();
@@ -24,7 +24,9 @@ class CreateUsersReviewsTable extends Migration
             $table->boolean('recommended')->default(0);
             $table->integer('by_user_id')->default(0);
             $table->integer('for_user_id')->default(0);
-            $table->integer('_reserved_id_')->default(0);
+            $table->string('record_type');
+            $table->integer('record_id');
+            $table->text('attachment')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -37,6 +39,6 @@ class CreateUsersReviewsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users_reviews');
+        Schema::dropIfExists('user_reviews');
     }
 }

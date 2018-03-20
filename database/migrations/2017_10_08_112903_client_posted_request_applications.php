@@ -20,7 +20,7 @@ class ClientPostedRequestApplications extends Migration
             $table->integer('posted_request_id');
             $table->text('proposal');
             $table->enum('application_status', ['0', '1']); // 0 = rejected, 1 = hired,
-            $table->enum('status', ['0', '1', '2']); // 0 = inactive, 1 = active
+            $table->enum('status', ['0', '1', '2']); // 0 = inactive, 1 = active, 2 = 
             $table->softDeletes();
             $table->timestamps();
         });

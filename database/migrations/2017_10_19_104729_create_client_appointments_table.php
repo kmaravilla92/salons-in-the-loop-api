@@ -20,7 +20,7 @@ class CreateClientAppointmentsTable extends Migration
             $table->integer('professional_id')->nullable();
             $table->float('total_price', 12, 2)->nullable();
             $table->float('total_duration', 12, 2)->nullable();
-            $table->enum('status', ['0', '1']); // 0 = unpaid, 1 = paid
+            $table->enum('status', ['0', '1', '2', '3', '4']); // 0 = inactive, 1 = active, 2 = approve, 3 = rejected, 4 = approved then cancelled, 5 = completed
             $table->softDeletes();
             $table->timestamps();
         });

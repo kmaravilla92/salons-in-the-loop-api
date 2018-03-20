@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Entities\Image as ImageEntity;
 use App\Models\Entities\Clients\Profile as ClientProfileEntity;
 use App\Models\Entities\Owners\Profile as OwnerProfileEntity;
+use App\Models\Entities\Professionals\Profile as ProfessionalProfileEntity;
 use App\Models\Entities\Professionals\Services as ServicesEntity;
 use App\Models\Entities\Professionals\ServiceHours as ServiceHoursEntity;
 use App\Models\Entities\Users\Review as ReviewEntity;
@@ -23,7 +24,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password','phone_number'
+        'name', 'email', 'password', 'phone_number', 'first_name', 'last_name'
     ];
 
     /**
@@ -38,7 +39,7 @@ class User extends Authenticatable
     protected $guarded = [];
 
     protected $appends = [
-        'full_name', 'profile_pic'
+        'full_name', 'profile_pic', 'profile'
     ];
 
     public function getFullNameAttribute()
@@ -48,7 +49,7 @@ class User extends Authenticatable
 
     public function getProfilePicAttribute()
     {
-        $image = ImageEntity::where('type', 'user_profile_pic')->where('type_id', $this->id)->first();
+        $image = ImageEntity::where('type', 'user_profile_pic')->where('type_id', $this->id)->orderBy('id', 'DESC')->first();
         
         if($image){
             return $image->path;
@@ -70,6 +71,11 @@ class User extends Authenticatable
     {
         return $this->hasOne(OwnerProfileEntity::class, 'user_id', 'id');
     }
+
+    public function proProfile()
+    {
+        return $this->hasOne(ProfessionalProfileEntity::class, 'user_id', 'id');
+    }
     
     public function proServices()
     {
@@ -89,5 +95,20 @@ class User extends Authenticatable
     public function paymentInfo()
     {
         return $this->hasOne(PaymentInfoEntity::class, 'user_id', 'id');
+    }
+
+    public function getProfileAttribute()
+    {
+        if(!is_null($this->proProfile)){
+            return $this->proProfile;
+        }
+
+        if(!is_null($this->clientProfile)){
+            return $this->clientProfile;
+        }
+
+        if(!is_null($this->ownerProfile)){
+            return $this->ownerProfile;
+        }
     }
 }

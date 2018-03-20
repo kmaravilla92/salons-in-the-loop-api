@@ -5,22 +5,23 @@ namespace App\Http\Controllers\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\User as UserEntity;
+use App\Models\Entities\Users\PaymentInfo as PaymentInfoEntity;
 
 
 class PaymentInfoController extends Controller
 {
 
-	protected $_payment_info = null;
+	protected $_user_id = null;
 
 	public function __construct(Request $request)
 	{
-		$user = UserEntity::where('id', $request->input('user_id'))->first();
-		$this->_payment_info = $user->paymentInfo;
+		$this->_user_id = $request->input('user_id');
+		$user = UserEntity::where('id', $this->_user_id)->first();
 	}
 
 	protected function _getPaymentInfo()
 	{
-		return $this->_payment_info;
+		return new PaymentInfoEntity;
 	}
 
 	public function getPaymentInfo()
@@ -60,7 +61,7 @@ class PaymentInfoController extends Controller
 			$request->input('payment_info.billing_address')
 		);
 
-		$response['success'] = $payment_info_entity->update($payment_info);
+		$response['success'] = $payment_info_entity->updateOrCreate(['user_id' => $this->_user_id], $payment_info);
 
 		return response()->json($response);
 	}

@@ -17,9 +17,10 @@ class CreateOwnersSpaceRentalsTable extends Migration
             $table->increments('id');
             $table->integer('owner_id')->nullable();
             $table->string('category')->nullable();
-            $table->string('title')->nullable();
+            $table->string('title');
             $table->text('description')->nullable();
-            $table->integer('number_of_spaces')->nullable();
+            $table->integer('number_of_occupied_spaces')->default(0)->nullable();
+            $table->integer('number_of_spaces')->default(0)->nullable();
             $table->enum('rate', ['0', '1', '2', '3'])->nullable()->default('0');
             $table->float('rate_price', 12, 2)->nullable()->default(0);
             $table->text('selected_days')->nullable();

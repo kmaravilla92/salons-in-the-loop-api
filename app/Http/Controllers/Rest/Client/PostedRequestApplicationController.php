@@ -9,21 +9,22 @@ use App\Models\Entities\Clients\PostedRequestApplications as PostedRequestApplic
 class PostedRequestApplicationController extends Controller
 {
     public function index( 
-        $posted_request_id, 
         Request $request
     )
     {
-        $user_id = $request->user_id;
-        if($user_id){
-            $applications = PostedRequestApplicationsEntity::ownedBy($user_id);
+        $professional_id = $request->pro_id;
+        $posted_request_id = $request->posted_request_id;
+        if($professional_id){
+            $applications = PostedRequestApplicationsEntity::ownedBy($owner_id, 'professional_id');
         }else{
             $applications = new PostedRequestApplicationsEntity;
         }
-        $applications = $applications
-                            ->with('professional')
-                            ->where('posted_request_id', $posted_request_id)
-                            ->get();
-        return response()->json($applications);
+        return $applications
+                    ->with(['professional', 'professional.proProfile'])
+                    ->where('posted_request_id', $posted_request_id)
+                    ->paginate(
+                        config('settings.pagination.per_page')
+                    );
     }
 
     public function store(

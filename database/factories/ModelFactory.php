@@ -73,7 +73,7 @@ $factory->define(App\Models\Entities\BlogPost::class, function (Faker\Generator 
 
     return [
         'slug' 				=> $faker->slug,
-        'title' 			=> $faker->realText(150),
+        'title' 			=> $faker->realText(25),
         'status' 			=> '1',
         'content' 			=> implode('', $contents),
         'excerpt' 			=> $faker->realText(150),
@@ -91,24 +91,25 @@ $factory->define(App\Models\Entities\Clients\PostedRequests::class, function(Fak
 		$user_professional_types[] = $professional_types[rand(0, count($professional_types) - 1)];
 	}
 	return [
-		'user_id' => $user->id,
-		'professional_types'=>implode(',', $user_professional_types),
-        'title'=>$faker->realText(150),
+		'user_id'=>$user->id,
+		'professional_types'=>$user_professional_types,
+        'title'=>$faker->realText(25),
         'message'=>$faker->realText(150),
         'desired_date'=>date('Y-m-d'),
         'desired_time'=>date('H:i:s'),
         'servicing_area'=>$faker->streetAddress,
         'city'=>$faker->city,
         'state'=>$faker->state,
-        'budget'=>$faker->randomFloat(2, 1000, 99999),
-        'service_options'=>json_encode([
+        'budget'=>$faker->randomFloat(2, 10, 99),
+        'service_options'=>[
         	'must_be_performed_in_a_salon' => ['0','1'][rand(0,1)],
         	'pro_must_be_licensed' => ['0','1'][rand(0,1)],
         	'needed_at_address_below' => ['0','1'][rand(0,1)],
         	'other_area' => ''
-        ]),
+        ],
         'current_look_photos'=>'',
         'desired_look_photos'=>'',
+        'status' => ['0','1','2','3'][rand(0,3)]
 	];
 });
 
@@ -116,6 +117,7 @@ $factory->define(App\Models\Entities\Clients\PostedRequests::class, function(Fak
 $factory->define(App\Models\Entities\Clients\PostedRequestApplications::class, function(Faker\Generator $faker) use($random_pro_id)
 {
 	return [
+		'posted_request_id' => 1,
 		'professional_id' => $random_pro_id(),
 		'proposal' => $faker->realText(150),
 	];
@@ -128,7 +130,7 @@ $factory->define(App\Models\Entities\Professionals\Services::class, function(Fak
 		'professional_id' => $random_pro_id(),
 		'service_name' => ['Hair Cut', 'Hair Dry', 'Hair Trim', 'Hair Gel'][rand(0, 3)],
 		'duration' => $faker->randomFloat(2, 30, 60),
-		'price' => $faker->randomFloat(2, 1000, 9999)
+		'price' => $faker->randomFloat(2, 10, 99)
 	];
 });	
 
@@ -167,7 +169,7 @@ $factory->define(App\Models\Entities\PaymentHistory::class, function(Faker\Gener
 	return [
 		'title' => $faker->realText(75),
 		'description' => $faker->realText(75),
-		'amount' => $faker->randomFloat(2, 1000, 9999),
+		'amount' => $faker->randomFloat(2, 10, 99),
 		'status' => ['0', '1', '2'][rand(0, 2)],
 		'owner_id' => 0
 	];
@@ -195,12 +197,12 @@ $factory->define(App\Models\Entities\Owners\HelpRequest::class, function(Faker\G
 {
 	return [
 		'owner_id' => 0,	
-		'category' => ['Barber', 'Hair Stylist', 'Esthetician'][rand(0, 2)],
-		'title' => $faker->realText(75),
+		'category' => array_slice(['Barber', 'Hair Stylist', 'Esthetician'], 0, rand(1, 3)),
+		'title' => $faker->realText(25),
 		'description' => $faker->realText(150),
 		'rate' => ['0', '1', '2', '3'][rand(0, 3)],
-		'weekly_total' => $faker->randomFloat(2, 1000, 9999),
-		'selected_days' => json_encode(['Mon'=>'Monday', 'Tue'=>'Tuesday', 'Sun'=>'Sunday']),
+		'weekly_total' => $faker->randomFloat(2, 10, 99),
+		'selected_days' => ['Mon', 'Tue', 'Sun'],
 		'start_date' => date('Y-m-d'),
 		'end_date' => date('Y-m-d'),
 		'start_time' => date('H:i:s'),
@@ -208,7 +210,7 @@ $factory->define(App\Models\Entities\Owners\HelpRequest::class, function(Faker\G
 		'address' => $faker->address,
 		'city' => $faker->city,
 		'state' => $faker->state,
-		'service_options' => json_encode([]),
+		'service_options' => [],
 		'professionals_applied_count' => 0,
 	];
 });
@@ -227,13 +229,13 @@ $factory->define(App\Models\Entities\Owners\SpaceRental::class, function(Faker\G
 {
 	return [
 		'owner_id' => 0,	
-		'category' => ['Barber', 'Hair Stylist', 'Esthetician'][rand(0, 2)],
-		'title' => $faker->realText(75),
+		'category' => array_slice(['Barber', 'Hair Stylist', 'Esthetician'], 0, rand(1, 3)),
+		'title' => $faker->realText(25),
 		'description' => $faker->realText(150),
 		'number_of_spaces' => rand(1,4),
 		'rate' => ['0', '1', '2', '3'][rand(0, 3)],
-		'rate_price' => $faker->randomFloat(2, 1000, 9999),
-		'selected_days' => json_encode(['Mon'=>'Monday', 'Tue'=>'Tuesday', 'Sun'=>'Sunday']),
+		'rate_price' => $faker->randomFloat(2, 10, 99),
+		'selected_days' => ['Mon', 'Tue', 'Sun'],
 		'start_date' => date('Y-m-d'),
 		'end_date' => date('Y-m-d'),
 		'start_time' => date('H:i:s'),
@@ -241,7 +243,7 @@ $factory->define(App\Models\Entities\Owners\SpaceRental::class, function(Faker\G
 		'address' => $faker->address,
 		'city' => $faker->city,
 		'state' => $faker->state,
-		'requirements' => json_encode([]),
+		'requirements' => [],
 		'renters_count' => 0,
 	];
 });
@@ -251,7 +253,45 @@ $factory->define(App\Models\Entities\Owners\SpaceRentalApplication::class, funct
 	return [
 		'professional_id' => $random_pro_id(),
 		'space_rental_id' => 0,
-		'application_status' => '0',
+		'start_date' =>  date('Y-m-d'),
+        'end_date' =>  date('Y-m-d'),
+        'selected_days' => [],
+        'start_time' => date('H:i:s'),
+        'end_time' => date('H:i:s'),
+        'allow_reoccuring' => ['0', '1'][rand(0, 1)], // 0 = no, 1 = yes
+        'license_image_path' => null,
+        'message_to_salon_owner' => $faker->realText(75),
+		'application_status' => ['0', '1'][rand(0, 1)],
 		'status' => ['0', '1'][rand(0, 1)],
+	];
+});
+
+$factory->define(App\Models\Entities\Users\Review::class, function(Faker\Generator $faker) {
+	$quality_of_service = $faker->randomFloat(1, 1, 5);
+	$professionalism = $faker->randomFloat(1, 1, 5);
+	$value = $faker->randomFloat(1, 1, 5);
+	$overall_rating = round(($quality_of_service + $professionalism + $value) / 15, 2);
+	$record_types = [
+		['App\\Models\\Entities\\Clients\\PostedRequests', 'user_id', 'client_posted_request'],
+		['App\\Models\\Entities\\Clients\\Appointments', 'client_id', 'client_appointment'],
+		['App\\Models\\Entities\\Owners\\HelpRequest', 'owner_id', 'owner_help_request'],
+		['App\\Models\\Entities\\Owners\\SpaceRental', 'owner_id', 'owner_space_rental'],
+	];
+	$record_type_arr = $record_types[rand(0, 3)];
+	$record_type_class = $record_type_arr[0];
+	$record_type = $record_type_arr[2];
+	$by_user_id_field = $record_type_arr[1];
+	$record = $record_type_class::inRandomOrder()->first();
+	return [
+		'feedback' => $faker->realText(75),
+		'quality_of_service' => $quality_of_service,
+		'professionalism' => $quality_of_service,
+		'value' => $quality_of_service,
+		'overall_rating' => $overall_rating,
+		'recommended' => rand(0, 1),
+		'by_user_id' => $record->{$by_user_id_field},
+		'for_user_id' => 0,
+		'record_type' => $record_type,
+		'record_id' => $record->id,
 	];
 });

@@ -20,8 +20,21 @@ trait ModelTraits {
         return $model;
     }
 
+    public function getFullClassNameAttribute()
+    {
+        return self::class;
+    }
+
     public function scopeOwnedBy($query, $user_id = null, $field = 'user_id')
     {
         return $query->where($field, $user_id);
+    }
+
+    public function truncate($value, $limit = 20)
+    {
+        if(strlen($value) <= $limit){
+            return $value;
+        }
+        return substr($value, 0, $limit) . '...';
     }
 }

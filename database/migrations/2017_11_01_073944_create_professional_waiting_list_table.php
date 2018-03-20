@@ -19,6 +19,7 @@ class CreateProfessionalWaitingListTable extends Migration
             $table->integer('professional_id')->nullable();
             $table->string('title')->nullable();
             $table->text('message')->nullable();
+            $table->text('selected_schedules')->nullable();
             $table->string('phone_number', 50)->nullable();
             $table->timestamps();
             $table->softDeletes();

@@ -8,6 +8,13 @@ use App\Models\Entities\Professionals\ClientPostedRequestApplication as ClientPo
 
 class ClientPostedRequestApplicationController extends Controller
 {
+    protected $client_posted_request_application_entity;
+
+    public function __construct(ClientPostedRequestApplicationEntity $client_posted_request_application_entity)
+    {
+        $this->client_posted_request_application_entity = $client_posted_request_application_entity;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -15,10 +22,19 @@ class ClientPostedRequestApplicationController extends Controller
      */
     public function index($pro_id, Request $request)
     {
-        return ClientPostedRequestApplicationEntity::ownedBy($pro_id, 'professional_id')
-                    ->with('postedRequest')
-                    ->orderBy('created_at', 'DESC')
-                    ->get();
+        $this->client_posted_request_application_entity = ClientPostedRequestApplicationEntity::ownedBy($pro_id, 'professional_id')
+                    ->with(['postedRequest', 'postedRequest.client', 'professional']);
+        $per_page = config('settings.pagination.per_page');
+        if(isset($request->recent_only)){
+            $this->client_posted_request_application_entity = $this->client_posted_request_application_entity->limit(5);
+            $per_page = 5;
+        }
+        return $this
+                ->client_posted_request_application_entity
+                ->orderBy('created_at', 'DESC')
+                ->paginate(
+                    $per_page
+                );
     }
 
     /**
@@ -56,7 +72,7 @@ class ClientPostedRequestApplicationController extends Controller
     public function show($pro_id, $id,Request $request)
     {
         return ClientPostedRequestApplicationEntity::ownedBy($pro_id, 'professional_id')
-                    ->with('postedRequest')
+                    ->with(['postedRequest', 'postedRequest.client', 'professional'])
                     ->findOrFail($id);
     }
 

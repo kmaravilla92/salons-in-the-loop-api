@@ -7,6 +7,7 @@ use App\Models\Entities\Traits\ModelTraits;
 use App\User as UserEntity;
 use App\Models\Entities\Clients\AppointmentSelectedServices as AppointmentSelectedServicesEntity;
 use App\Models\Entities\Clients\AppointmentSelectedDateTime as AppointmentSelectedDateTimeEntity;
+use App\Models\Entities\Users\Review;
 
 class Appointments extends Model
 {
@@ -15,6 +16,12 @@ class Appointments extends Model
     protected $table = 'client_appointments';
 
     protected $guarded = [];
+
+    protected $appends = [
+        'limited_selected_services',
+        'limited_selected_time',
+        'full_class_name',
+    ];
 
     public function client()
     {
@@ -34,5 +41,25 @@ class Appointments extends Model
     public function selectedDatetime()
     {
         return $this->hasMany(AppointmentSelectedDateTimeEntity::class, 'client_appointment_id', 'id');
+    }
+
+    public function review()
+    {
+        return $this->hasOne(Review::class, 'record_id', 'id')->where('record_type', self::class);
+    }
+
+    public function getLimitedSelectedServicesAttribute()
+    {
+        return array_slice($this->selectedServices->toArray(), 0, 2);;
+    }
+
+    public function getLimitedSelectedTimeAttribute()
+    {
+        return array_slice($this->selectedDatetime->toArray(), 0, 2);
+    }
+
+    public function getCreatedAtAttribute()
+    {
+        return date('F d, Y', strtotime($this->attributes['created_at']));
     }
 }

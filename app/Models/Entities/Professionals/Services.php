@@ -12,4 +12,16 @@ class Services extends Model
     protected $table = 'professional_services';
 
     protected $guarded = [];
+
+    protected $appends = [];
+
+    public function getStatusAttribute($value)
+    {
+    	return $this->attributes['status'] == '1'; // true o false
+    }
+
+    public function setStatusAttribute($value)
+    {
+    	$this->attributes['status'] = $value ? '1' : '0';
+    }
 }

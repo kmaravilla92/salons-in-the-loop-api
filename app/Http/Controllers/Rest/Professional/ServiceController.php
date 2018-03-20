@@ -17,15 +17,7 @@ class ServiceController extends Controller
      */
     public function index(Request $request)
     {
-        $user_id = $request->user_id;
-
-        $services = Services::ownedBy($user_id, 'professional_id')->orderBy('created_at', 'ASC')->get();
-
-        return collect($services)->map(function($service)
-            {
-                $service['status'] = $service['status'] == '1' ? true : false;
-                return $service;
-            });
+        return Services::ownedBy($request->user_id, 'professional_id')->orderBy('created_at', 'DESC')->get();
     }
 
     /**
@@ -46,7 +38,8 @@ class ServiceController extends Controller
      */
     public function store($user_id, Request $request)
     {
-        $existing_services = ServicesEntity::where('professional_id', $user_id)->delete();
+        $existing_services = ServicesEntity::where('professional_id', $user_id);
+        $existing_services->delete();
 
         if($services = $request->input('services')){
             foreach($services as $service){
@@ -56,25 +49,15 @@ class ServiceController extends Controller
                     $service['created_at']
                 );
                 $service_id = isset($service['id']) ? $service['id'] : null;
-
-                if(is_bool($service['status'])){
-                    $service['status'] = $service['status'] ? '1' : '0';
-                }
-                
-                if(!is_null($service_id)){
-                    $service_entity = ServicesEntity::find($service_id);
-                    if($service_entity){
-                        unset($service['id']);
-                        $service_entity->update($service);
-                    }
-                }else{
-                    ServicesEntity::create($service);
-                }
+                ServicesEntity::updateOrCreate([
+                    'id' => $service_id
+                ], $service);
             }
         }
 
         return response()->json([
-            'success' => true
+            'success' => true,
+            'services' => $existing_services->orderBy('created_at', 'DESC')->get()
         ]);
     }
 

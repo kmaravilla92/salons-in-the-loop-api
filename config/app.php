@@ -171,6 +171,8 @@ return [
         Cartalyst\Sentinel\Laravel\SentinelServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
         Laravel\Tinker\TinkerServiceProvider::class,
+        Anouar\Paypalpayment\PaypalpaymentServiceProvider::class,
+        Nexmo\Laravel\NexmoServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -233,6 +235,8 @@ return [
         'Reminder'   => Cartalyst\Sentinel\Laravel\Facades\Reminder::class,
         'Sentinel'   => Cartalyst\Sentinel\Laravel\Facades\Sentinel::class,
         'Image' => Intervention\Image\Facades\Image::class,
+        'Paypalpayment'   => Anouar\Paypalpayment\Facades\PaypalPayment::class,
+        'Nexmo' => Nexmo\Laravel\Facade\Nexmo::class,
     ],
 
     'api' => [

@@ -46,5 +46,22 @@ return [
 			'Salon Suites',
 			'Other'
 		]
-	]
+	],
+	'pagination' => [
+		'per_page' => 25
+	],
+	'reviews' => [
+		'record_types' => [
+			'client_posted_request' => 'App\Models\Entities\Clients\PostedRequests',
+			'client_appointment' => 'App\Models\Entities\Clients\Appointments',
+			'owner_help_request' => 'App\Models\Entities\Owners\HelpRequest' ,
+			'owner_space_rental' => 'App\Models\Entities\Owners\SpaceRental',
+		]
+	],
+	'service_options_labels' => [
+    	'must_be_performed_in_a_salon' => 'Services must be performed in a Salon',
+    	'pro_must_be_licensed' => 'Professional must be licensed',
+    	'needed_at_address_below' => 'Services needed at address below',
+    	'other_area' => 'Other Area'
+    ]
 ];

@@ -20,17 +20,22 @@ class ClientPostedRequestTableSeeder extends Seeder
         ->create()
         ->each(function($posted_request)
         {
-            $count = rand(5, 10);
-        	$posted_request
-        		->prosApplications()
-        		->saveMany(
-        			factory(
-        				PostedRequestApplications::class, 
-        				$count
-        			)->make()
-        		);
+            $pros = App\User::where('email','like','%+professional@%')->get();
+            foreach($pros as $pro){
+                factory(
+                     PostedRequestApplications::class, 
+                     1
+                 )
+                ->create()
+                ->each(function($application) use($posted_request, $pro)
+                {
+                    $application->posted_request_id = $posted_request->id;
+                    $application->professional_id = $pro->id;
+                    $application->save();
+                });
+            }
 
-            $posted_request->professionals_applied_count = $count;
+            $posted_request->professionals_applied_count = count($pros);
             $posted_request->save();
         });
     }

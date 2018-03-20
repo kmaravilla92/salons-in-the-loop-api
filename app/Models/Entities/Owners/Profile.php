@@ -28,20 +28,15 @@ class Profile extends Model
 
     protected $appends = [
     	'full_address',
+        'category_csv',
         'category_decoded'
    	];
-
-    public function getGeneralSpaceDescriptionAttribute()
-    {
-        if(empty($this->general_space_description))
-            return 'No description';
-        return $this->general_space_description;
-    }
 
     public function getFullAddressAttribute()
     {
         $address = $this->address . ($this->address ? ' ,' : '' ) . $this->city . ($this->city ? ' ,' : '' ) . $this->state;
-    	return empty($address) ? 'N\A' : $address;
+    	// return empty($address) ? 'N\A' : $address;
+        return $address;
     }
 
     public function getCategoryDecodedAttribute()
@@ -50,5 +45,10 @@ class Profile extends Model
             $this->category = '[]';
         }
         return json_decode($this->category);
+    }
+
+    public function getCategoryCsvAttribute()
+    {
+        return join($this->category_decoded, ',');
     }
 }

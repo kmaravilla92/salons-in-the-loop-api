@@ -23,5 +23,6 @@ class DatabaseSeeder extends Seeder
         $this->call(PaymentInfoTable::class);
         $this->call(OwnersHelpRequestsTableSeeder::class);
         $this->call(OwnersSpaceRentalsTableSeeder::class);
+        $this->call(ReviewsTableSeeder::class);
     }
 }

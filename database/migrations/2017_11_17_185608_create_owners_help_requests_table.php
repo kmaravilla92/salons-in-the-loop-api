@@ -32,6 +32,7 @@ class CreateOwnersHelpRequestsTable extends Migration
             $table->text('service_options')->nullable();
             $table->integer('professionals_applied_count')->default(0);
             $table->integer('hired_application')->default(0);
+            $table->enum('status', ['0', '1', '2', '3', '4'])->default('0'); // 0 = inactive, 1 = active, 2= hired pro, 3 = cancelled, 4 = completed
             $table->timestamps();
             $table->softDeletes();
         });

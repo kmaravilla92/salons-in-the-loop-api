@@ -25,17 +25,68 @@ class SpaceRentalController extends Controller
         Request $request
     )
     {
+        // dd($request->input('filters'));
+        $space_rentals = $this->space_rental_entity;
+
         if($owner_id = $request->owner_id){
-            $this->space_rental_entity = $this->space_rental_entity->ownedBy($owner_id, 'owner_id');
+            $space_rentals = $space_rentals->ownedBy($owner_id, 'owner_id');
         }
 
-        $help_requests = $this->space_rental_entity->orderBy('id', 'DESC');
+        $space_rentals = $this->_applyFilters($space_rentals, $request->input('filters'));
+
+        $space_rentals = $space_rentals->with(['owner', 'owner.ownerProfile'])->orderBy('id', 'DESC');
         
+        $per_page = config('settings.pagination.per_page');
+
         if($request->recent_only){
-            $help_requests = $help_requests->limit(5);
+            $space_rentals = $space_rentals->limit(5);
+            $per_page = 5;
         }
 
-        return $help_requests->get();
+        return $space_rentals->paginate($per_page);
+    }
+
+    private function _applyFilters($space_rentals, $filters)
+    {
+        if(0 === count($filters)){
+            return $space_rentals;
+        }
+
+        foreach($filters as $key => $filter){
+            switch($key){
+                case 'professional_type':
+                    if(!empty($filters['professional_type'])){
+                        $space_rentals = $space_rentals->where('category', 'LIKE', '%'.$filters['professional_type'].'%');
+                    }
+                break;
+                case 'availability':
+                    $availability = $filter;
+                    if(!empty($availability['date']['from']) && !empty($availability['date']['to'])){
+                        $space_rentals = $space_rentals->where(function($query) use($availability)
+                        {
+                            $from = date('Y-m-d', strtotime($availability['date']['from']));
+                            $to = date('Y-m-d', strtotime($availability['date']['to']));
+                            $query
+                                ->whereDate('start_date', '>=', $from)
+                                ->whereDate('end_date', '<=', $to);
+                        });
+                    }
+                break;
+                case 'days':
+                    $days = $filter;
+                    if(count($days) > 0){
+                        $space_rentals = $space_rentals->where(function($query) use($days)
+                        {
+                            foreach($days as $day){
+                                $query->orWhere('selected_days', 'LIKE', '%'.$day.'%');
+                            }
+                        });
+                    }
+                break;
+            }
+        }
+
+        return $space_rentals;
     }
 
     /**
@@ -50,26 +101,26 @@ class SpaceRentalController extends Controller
     )
     {
 
-        $posted_help_request = $request->input('posted_help_request');
-        $posted_help_request['owner_id'] = $owner_id;
+        $space_rental = $request->input('space_rental');
+        $space_rental['owner_id'] = $owner_id;
 
-        if(($id = $posted_help_request['id']) > 0){
+        if(($id = $space_rental['id']) > 0){
             $space_rental_entity = $this
                                     ->space_rental_entity
                                     ->updateOrCreate(
                                         ['id' => $id],
-                                        $posted_help_request
+                                        $space_rental
                                     );
         }else{
             $space_rental_entity = $this
                                     ->space_rental_entity
                                     ->create(
-                                        $posted_help_request
+                                        $space_rental
                                     );
         }
         
         return response()->json([
-            'posted_help_request' => $space_rental_entity,
+            'space_rental' => $space_rental_entity,
             'success' => isset($space_rental_entity->id)
         ]);
     }
@@ -81,14 +132,21 @@ class SpaceRentalController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(
-        $posted_rental_id,
         Request $request
     )
     {
         if($owner_id = $request->owner_id){
             $this->space_rental_entity = $this->space_rental_entity->ownedBy($owner_id, 'owner_id');
         }
-        return $this->space_rental_entity->find($posted_rental_id);
+        
+        $this->space_rental_entity = $this->space_rental_entity->with('owner')->find($request->posted_rental_id);
+
+        if($this->space_rental_entity){
+            $this->space_rental_entity->renters_count = $this->space_rental_entity->applications()->count();
+            $this->space_rental_entity->save();
+        }
+
+        return $this->space_rental_entity;
     }
     
     /**

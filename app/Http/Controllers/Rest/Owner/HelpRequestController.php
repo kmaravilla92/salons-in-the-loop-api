@@ -22,17 +22,30 @@ class HelpRequestController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(
-        $owner_id,
         Request $request
     )
     {
-        $help_requests = $this->help_request_entity->ownedBy($owner_id, 'owner_id')->orderBy('id', 'DESC');
-        
-        if($request->recent_only){
-            $help_requests = $help_requests->limit(5);
+        $help_requests = $this->help_request_entity;
+        if($owner_id = $request->owner_id){
+            $help_requests = $help_requests->ownedBy($owner_id, 'owner_id');
         }
 
-        return $help_requests->get();
+        $help_requests = $help_requests->with('owner')->orderBy('id', 'DESC');
+        
+        $per_page = config('settings.pagination.per_page');
+
+        if($request->recent_only){
+            $help_requests = $help_requests->limit(5);
+            $per_page = 5;
+        }
+
+        if($request->input('filters')){
+            if($professional_types = $request->input('filters.professional_types')){
+                $help_requests = $help_requests->where('category', 'LIKE', '%'.$professional_types.'%');
+            }
+        }
+
+        return $help_requests->paginate($per_page);
     }
 
     /**
@@ -78,16 +91,15 @@ class HelpRequestController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(
-        $owner_id,
-        $help_request_id
+        Request $request
     )
     {
-        $help_request_entity = $this
-                                ->help_request_entity
-                                ->ownedBy($owner_id, 'owner_id')
-                                ->find($help_request_id);
+        $help_request_entity = $this->help_request_entity;
+        if($owner_id = $request->owner_id){
+            $help_request_entity = $help_request_entity->ownedBy($owner_id, 'owner_id');
+        }
 
-        return $help_request_entity;
+        return $help_request_entity->with('owner')->find($request->help_request_id);
     }
     
     /**

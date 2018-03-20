@@ -16,7 +16,7 @@ class ProfileViewRequestController extends Controller
      */
     public function index($user_id, Request $request)
     {
-        return ProfileViewRequestsEntity::with(['client','viewer'])->where('client_id', $user_id)->orderBy('id', 'DESC')->get();
+        return ProfileViewRequestsEntity::with(['client', 'viewer'])->where('client_id', $user_id)->orderBy('id', 'DESC')->paginate(config('settings.pagination.per_page'));
     }
 
     /**

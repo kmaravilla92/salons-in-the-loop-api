@@ -4,6 +4,8 @@ namespace App\Models\Entities\Owners;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Entities\Traits\ModelTraits;
+use App\Models\Entities\Users\Review;
+use App\User as UserEntity;
 
 class SpaceRental extends Model
 {
@@ -14,15 +16,42 @@ class SpaceRental extends Model
     protected $guarded = [];
 
     protected $appends = [
+        'category_csv',
+        'category_decoded',
     	'full_address',
     	'rate_text',
     	'selected_days_text_short',
-    	'service_options_decoded',
+    	'requirements_decoded',
+        'number_of_available_spaces',
+        'full_class_name',
    	];
+
+    public function owner()
+    {
+        return $this->hasOne(UserEntity::class, 'id', 'owner_id');
+    }
 
     public function applications()
     {
     	return $this->hasMany(SpaceRentalApplication::class, 'space_rental_id', 'id');
+    }
+
+    public function review()
+    {
+        return $this->hasOne(Review::class, 'record_id', 'id')->where('record_type', self::class);
+    }
+
+    public function getCategoryDecodedAttribute()
+    {
+        if(empty($this->attributes['category'])){
+            return json_decode('[]');
+        }
+        return json_decode($this->attributes['category']);
+    }
+
+    public function getCategoryCsvAttribute()
+    {
+        return join($this->category_decoded, ',');
     }
 
     public function getFullAddressAttribute()
@@ -48,13 +77,14 @@ class SpaceRental extends Model
     		return 'N\A';
     	return collect($decoded_selected_days)->implode(' ');
     }
-
-    public function getServiceOptionsDecodedAttribute()
+    
+    public function getRequirementsDecodedAttribute()
     {
-        if(is_null($this->service_options)){
-            $this->service_options = '[]';
+        $requirements = $this->attributes['requirements'];
+        if(is_null($requirements)){
+            $requirements = '[]';
         }
-    	return json_decode($this->service_options);
+    	return json_decode($requirements);
     }
 
     public function getCreatedAtAttribute()
@@ -82,6 +112,11 @@ class SpaceRental extends Model
     	return date('h:i:s A', strtotime($this->attributes['end_time']));
     }
 
+    public function getNumberOfAvailableSpacesAttribute()
+    {
+        return $this->attributes['number_of_spaces'] - $this->attributes['number_of_occupied_spaces'];
+    }
+
     public function setStartDateAttribute($value)
     {
     	$this->attributes['start_date'] = date('Y-m-d', strtotime($value));
@@ -100,5 +135,25 @@ class SpaceRental extends Model
     public function setEndTimeAttribute($value)
     {
     	$this->attributes['end_time'] = date('H:i:s', strtotime($value));
+    }
+
+    public function setCategoryAttribute($value)
+    {
+        $this->attributes['category'] = json_encode($value);
+    }
+
+    public function setSelectedDaysAttribute($value)
+    {
+        $this->attributes['selected_days'] = json_encode($value);
+    }
+
+    public function setRequirementsAttribute($value)
+    {
+        $this->attributes['requirements'] = json_encode($value);
+    }
+
+    public function setRateAttribute($value)
+    {
+        $this->attributes['rate'] = (string)$value;
     }
 }

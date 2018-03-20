@@ -4,15 +4,15 @@ namespace App\Http\Controllers\Rest\Owner;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\Entities\Owners\HelpRequest as HelpRequestEntity; 
+use App\Models\Entities\Owners\SpaceRental as SpaceRentalEntity; 
 
-class HelpRequestApplicationController extends Controller
+class SpaceRentalApplicationController extends Controller
 {
     public function __construct(
-        HelpRequestEntity $help_request_entity
+        SpaceRentalEntity $space_rental_entity
     )
     {
-        $this->help_request_entity = $help_request_entity;
+        $this->space_rental_entity = $space_rental_entity;
     }
 
     /**
@@ -22,14 +22,20 @@ class HelpRequestApplicationController extends Controller
      */
     public function index(
         $owner_id,
-        $help_request_id,
+        $space_rental_id,
         Request $request
     )
     {
-        $help_request_entity = $this->help_request_entity->ownedBy($owner_id, 'owner_id')->find($help_request_id);
+        $space_rental_entity = $this->space_rental_entity->ownedBy($owner_id, 'owner_id')->where('id',$space_rental_id)->first();
         
-        if($help_request_entity){
-            return $help_request_entity->applications()->with('professional')->get();
+        if($space_rental_entity){
+            return $space_rental_entity
+                    ->applications()
+                    ->with('professional')
+                    ->orderBy('created_at', 'DESC')
+                    ->paginate(
+                        config('settings.pagination.per_page')
+                    );
         }
         return [];
     }
@@ -50,10 +56,19 @@ class HelpRequestApplicationController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(
+        $owner_id,
+        $space_rental_id,
+        Request $request
+    )
     {
-        // return response()->json([
-        // ]);
+        
+        $space_rental_entity = $this->space_rental_entity->ownedBy($owner_id, 'owner_id')->findOrFail($space_rental_id);
+        $application = $space_rental_entity->applications()->create($request->input('rental_booking'));
+        return response()->json([
+            'success' => isset($application->id),
+            'application' => $application
+        ]);
     }
 
     /**
@@ -87,17 +102,17 @@ class HelpRequestApplicationController extends Controller
      */
     public function update(
         $owner_id,
-        $help_request_id,
+        $space_rental_id,
         $application_id,
         Request $request
     )
     {
-        // dd([$owner_id, $help_request_id, $application_id]);
-        $help_request_entity = $this->help_request_entity->ownedBy($owner_id, 'owner_id')->find($help_request_id);
+        // dd([$owner_id, $space_rental_id, $application_id]);
+        $space_rental_entity = $this->space_rental_entity->ownedBy($owner_id, 'owner_id')->find($space_rental_id);
 
         $application = null;
-        if($help_request_entity){
-            $application = $help_request_entity->applications->find($application_id);
+        if($space_rental_entity){
+            $application = $space_rental_entity->applications->find($application_id);
             if($application){
                 return response()->json([
                     'success' => $application->update($request->all())

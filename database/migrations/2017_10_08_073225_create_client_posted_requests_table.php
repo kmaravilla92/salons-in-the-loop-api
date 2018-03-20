@@ -16,7 +16,7 @@ class CreateClientPostedRequestsTable extends Migration
         Schema::create('client_posted_requests', function(Blueprint $table)
         {
             $table->increments('id');
-            $table->integer('user_id')->nullable();
+            $table->integer('user_id');
             $table->text('professional_types')->nullable();
             $table->string('title')->nullable();
             $table->text('message')->nullable();
@@ -31,7 +31,7 @@ class CreateClientPostedRequestsTable extends Migration
             $table->text('desired_look_photos')->nullable();
             $table->integer('professionals_applied_count')->nullable()->default(0);
             $table->integer('hired_application')->default(0);
-            $table->integer('status', ['0', '1', '2'])->default('0');
+            $table->enum('status', ['0', '1', '2', '3'])->default(0); // 0 = inactive, 1 = active, 2 = cancelled, 3 = completed
             $table->softDeletes();
             $table->timestamps();
         });

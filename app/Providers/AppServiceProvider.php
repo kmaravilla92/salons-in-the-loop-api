@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use App\Services\FirebaseClient;
+use App\Services\Payment;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,5 +32,9 @@ class AppServiceProvider extends ServiceProvider
                 return (new FirebaseClient);
             });
         }
+
+        $this->app->bind(Payment::class, function(){
+            return (new Payment);
+        });
     }
 }

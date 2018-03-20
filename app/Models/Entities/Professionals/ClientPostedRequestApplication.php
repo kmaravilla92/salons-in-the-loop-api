@@ -5,6 +5,7 @@ namespace App\Models\Entities\Professionals;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Entities\Clients\PostedRequests as PostedRequestsEntity;
 use App\Models\Entities\Traits\ModelTraits;
+use App\User as UserEntity;
 
 class ClientPostedRequestApplication extends Model
 {
@@ -19,5 +20,10 @@ class ClientPostedRequestApplication extends Model
     public function postedRequest()
     {
     	return $this->hasOne(PostedRequestsEntity::class, 'id', 'posted_request_id');
+    }
+
+    public function professional()
+    {
+    	return $this->hasOne(UserEntity::class, 'id', 'professional_id');
     }
 }

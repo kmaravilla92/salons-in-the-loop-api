@@ -62,6 +62,7 @@ class BlogPostController extends Controller
         }
 
         $blog_post->next_post = null;
+        $blog_post->previous_post = null;
 
         if(isset($request->include_next_post)){
             $next_blog_post = new BlogPostEntity;
@@ -73,6 +74,18 @@ class BlogPostController extends Controller
                 $next_blog_post = BlogPostEntity::first();
             }
             $blog_post->next_post = $next_blog_post;
+        }
+
+        if(isset($request->include_previous_post)){
+            $previous_blog_post = new BlogPostEntity;
+            $previous_blog_post_id = $blog_post->id - 1;
+            try{
+                $previous_blog_post = $previous_blog_post->findOrFail($previous_blog_post_id);
+            }catch(ModelNotFoundException $mnfe){
+                // Go back to first record
+                $previous_blog_post = BlogPostEntity::orderBy('id', 'DESC')->first();
+            }
+            $blog_post->previous_post = $previous_blog_post;
         }
 
         return $blog_post;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Rest\User\Store as StoreUser;
 use App\User as UserEntity;
 use App\Models\Entities\Image as ImageEntity;
+use App\Events\User\Created as UserCreated;
 use Sentinel;
 
 class UserController extends Controller
@@ -84,9 +85,15 @@ class UserController extends Controller
                             'professional_id' => $sentinel_user->id,
                             'service_hours' => config('settings.professionals.default_service_hours'),
                         ]);
+                    $laravel_user
+                        ->proProfile()
+                        ->create([
+                            'user_id' => $sentinel_user->id,
+                        ]);
                 break;
             }
 
+            event(new UserCreated($laravel_user));
             $response['messages'][] = 'Successfully registered';
             $response['success'] = true;
         }catch(\Exception $e){
@@ -108,7 +115,7 @@ class UserController extends Controller
         $sentinel_user = Sentinel::findById($user_id);
 
         $eloquent_user = $eloquent_user->with([
-            'reviews'
+            'reviews',
         ]);
 
         if($sentinel_user->hasAccess('client')){
@@ -131,6 +138,7 @@ class UserController extends Controller
 
         if($sentinel_user->hasAccess('professional')){
             $eloquent_user = $eloquent_user->with([
+                'proProfile',
                 'proServices' => function($query)
                 {
                     $query
@@ -138,7 +146,7 @@ class UserController extends Controller
                 },
                 'proServiceHours',
                 'images' => function($query){
-                    $query->where('type', 'pro_photos');
+                    $query->whereIn('type', ['pro_photos','license_photos']);
                 },
             ]);
         }
@@ -181,14 +189,14 @@ class UserController extends Controller
             }
 
             if($sentinel_user->hasAccess('professional')){
-                foreach(['images'] as $_photo_type){
+                foreach(['pro_photos','license_photos'] as $_photo_type){
                     if(!isset($user_arr['images'][$_photo_type])){
                         $user_arr[$_photo_type] = [];
                     }
                 }
             }
 
-            $user_profile_pic = $eloquent_user->images()->where('type', 'user_profile_pic')->orderBy('created_at', 'DESC')->first();
+            $user_profile_pic = $eloquent_user->images()->where('type', 'user_profile_pic')->orderBy('id', 'DESC')->first();
 
             if(!$user_profile_pic){
                 $user_arr['profile_pic'] = ['path'=>config('app.site_url') . '/frontsite/images/sitl-img.png', 'name'=>config('app.site_url') . '/frontsite/images/sitl-img.png'];
@@ -226,16 +234,14 @@ class UserController extends Controller
     {
         $user = new UserEntity;
         $sentinel_user = \Sentinel::findById($user_id);
-
         $user = $user->where('id', $user_id)->first();
         $user->update($request->all());
-
         $photo_types = [];
 
         if($sentinel_user->hasAccess('client')){
             $photo_types = $request->only([
                 'current_look_photos',
-                'desired_look_photos'
+                'desired_look_photos',
             ]);
         }
 
@@ -245,24 +251,28 @@ class UserController extends Controller
             ]);
         }
 
+        if($sentinel_user->hasAccess('professional')){
+            $photo_types = $request->only([
+                'pro_photos',
+                'license_photos',
+            ]);
+        }
+
         $photos_to_save = [];
         $photos_to_delete = [];
+        
+        $user->images()->whereIn('type', array_keys($photo_types))->delete();
+
         foreach($photo_types as $photo_type => $photos){
             if(count($photos)){
                 foreach($photos as $photo){
-                    if(!isset($photo['id'])){
-                        $photos_to_save[] = new ImageEntity([
-                            'name'      => $photo['name'],
-                            'type'      => $photo['type'],
-                            'type_id'   => $photo['type_id'],
-                            'path'      => $photo['path'],
-                            'status'    => '1'
-                        ]);
-                    }
-
-                    if(isset($photo['id']) && !is_null($photo['deleted_at'])){
-                        $photos_to_delete[] = $photo['id'];
-                    }
+                    $photos_to_save[] = new ImageEntity([
+                        'name'      => $photo['name'],
+                        'type'      => $photo['type'],
+                        'type_id'   => $photo['type_id'],
+                        'path'      => $photo['path'],
+                        'status'    => '1'
+                    ]);
                 }
             }
         }
@@ -271,11 +281,8 @@ class UserController extends Controller
             $user->images()->saveMany($photos_to_save);
         }
 
-        if(count($photos_to_delete)){
-            ImageEntity::whereIn('id', $photos_to_delete)->delete();
-        }
-
-        if($request->input('profile_pic')){
+        // var_dump($request->input('profile_pic'));dd([]);
+        if($request->input('profile_pic.path')){
             ImageEntity::create([
                 'name'      => $request->input('profile_pic.name'),
                 'type'      => 'user_profile_pic',
@@ -283,6 +290,9 @@ class UserController extends Controller
                 'path'      => $request->input('profile_pic.path'),
                 'status'    => '1'
             ]);
+        }else{
+            $profile_pics = ImageEntity::where('type', 'user_profile_pic')->where('type_id', $sentinel_user->id);
+            $profile_pics->delete();
         }
 
         if($sentinel_user->hasAccess('client')){
@@ -342,6 +352,39 @@ class UserController extends Controller
                     'user_id' => $sentinel_user->id
                 ],
                 $owner_profile
+            );
+        }
+
+        if($sentinel_user->hasAccess('professional')){
+            $pro_profile_input = $request->only([
+                'pro_profile.user_id',
+                'pro_profile.category',
+                'pro_profile.category_decoded',
+                'pro_profile.address',
+                'pro_profile.city',
+                'pro_profile.state',
+                'pro_profile.zipcode',
+                'pro_profile.cancellation_policy',
+                'pro_profile.social_link_facebook',
+                'pro_profile.social_link_instagram',
+                'pro_profile.social_link_twitter',
+            ])['pro_profile'];
+
+            $pro_profile_input['category'] = $pro_profile_input['category_decoded'];
+            unset($pro_profile_input['category_decoded']);
+
+            $pro_profile = collect($pro_profile_input)->map(function($value){
+                if(is_array($value)){
+                    return json_encode($value);
+                }
+                return $value;
+            })->toArray();
+
+            $user->proProfile()->updateOrCreate(
+                [
+                    'user_id' => $sentinel_user->id
+                ],
+                $pro_profile
             );
         }
 

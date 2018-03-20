@@ -23,9 +23,10 @@ class PostedRequestController extends Controller
         }else{
             $posted_requests = new PostedRequests;
         }
-
+        $per_page = config('settings.pagination.per_page');
         if(isset($request->recent_only)){
             $posted_requests = $posted_requests->limit(5);
+            $per_page = 5;
         }
 
         $posted_requests = $posted_requests->with('owner')->orderBy('created_at', 'DESC');
@@ -35,14 +36,11 @@ class PostedRequestController extends Controller
                 $posted_requests = $posted_requests->where('professional_types', 'LIKE', '%'.$professional_types.'%');
             }
         }
-
-        $posted_requests = $posted_requests->get();
-
-        $posted_requests = collect($posted_requests)->map(function($posted_requests){
-            return $this->_singleTransform($posted_requests);
-        });
-
-        return $posted_requests;
+        
+        return $posted_requests
+                ->paginate(
+                    $per_page
+                );
     }
 
     /**
@@ -79,23 +77,7 @@ class PostedRequestController extends Controller
             'name_my_own_price.desired_look_photos',
         ]);
 
-        $details = collect($inputs['name_my_own_price'])->map(function($input, $key){
-            if(is_array($input)){
-                return json_encode($input);
-            }
-
-            if(in_array($key, ['desired_date', 'desired_time'])){
-                if($key == 'desired_date'){
-                    $input = date('Y-m-d', strtotime($input));
-                }
-
-                if($key == 'desired_time'){
-                    $input = date('H:i:s', strtotime($input));
-                }
-            }
-            return $input;
-        })->toArray();
-
+        $details = $inputs['name_my_own_price'];
         $details['user_id'] = $user_id;
         $details['status'] = '0';
         $posted_request = PostedRequests::create($details);
@@ -129,11 +111,9 @@ class PostedRequestController extends Controller
             $posted_request = $posted_request->ownedBy($user_id);
         }
 
-        $posted_request = $posted_request
-                            ->where('id', $posted_request_id)
-                            ->first();
-        
-        return $this->_singleTransform($posted_request, true);
+        return $posted_request
+                    ->where('id', $posted_request_id)
+                    ->first();
     }
 
     /**
@@ -186,23 +166,5 @@ class PostedRequestController extends Controller
     public function destroy(PostedRequests $postedRequests)
     {
         //
-    }
-    
-    protected function _singleTransform(PostedRequests $posted_request, $full = false)
-    {
-        $posted_request_arr = $posted_request->toArray();
-        if(!$full){
-            $posted_request_arr['title'] = substr($posted_request->title, 0, 50) . '...';
-            $posted_request_arr['message'] = substr($posted_request->message, 0, 100) . '...';
-        }
-        $posted_request_arr['professional_types'] = $posted_request->professional_types;
-        // $posted_request_arr['desired_date'] = date('m/d/Y', strtotime($posted_request->desired_date));
-        // $posted_request_arr['desired_time'] = date('h:i A', strtotime($posted_request->desired_time));
-        // $posted_request_arr['created_at'] = $posted_request->created_at->format('m/d/Y');
-        $posted_request_arr['complete_address'] = $posted_request->servicing_area . ',' . $posted_request->city . ',' . $posted_request->state;
-
-        $posted_request_arr['current_look_photos'] = json_decode($posted_request_arr['current_look_photos']);
-        $posted_request_arr['desired_look_photos'] = json_decode($posted_request_arr['desired_look_photos']);
-        return $posted_request_arr;
     }
 }
